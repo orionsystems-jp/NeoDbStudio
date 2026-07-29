@@ -1,0 +1,8 @@
+{
+  "ProjectName": "MariaDB High-Performance Log (1,000+ Bilingual Records)",
+  "ProviderType": "MariaDB",
+  "ConnectionString": "Server=127.0.0.1;Port=3308;Database=neodb;Uid=root;Pwd=password;CharSet=utf8mb4;",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "MariaDB用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルテーブル（users, products, orders）完備。"
+}

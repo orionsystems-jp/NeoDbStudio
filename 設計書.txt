@@ -1,0 +1,87 @@
+1. 業務要件定義書 (Requirements Definition)
+1.1 プロジェクト概要
+既存の「A5:SQL Mk-2」の機能性を継承しつつ、現代的な技術スタック（.NET 8 / gRPC / Docker）を用いて、性能、拡張性、UI/UXを大幅に強化した次世代マルチデータベース管理システム「NeoDB Studio」を構築する。
+1.2 システムの目的
+多種DBの一元管理: RDBMSに加え、NoSQL、KVSを単一インターフェースで操作。
+超高速データアクセス: gRPCストリーミングによる大規模データのノンブロッキング表示。
+視覚的モデリング: MSAGLを用いたER図の自動生成と動的な配置最適化。
+1.3 機能要件
+ID	カテゴリ	機能名	詳細
+F-01	接続管理	マルチプロバイダ	Postgres, MySQL, SQL Server, Oracle, MariaDB, SQLite, ODBC, MongoDB, Redisへの接続
+F-02		接続情報暗号化	Windows DPAPIを用いた接続文字列のローカル暗号化保存
+F-03	SQL実行	高機能エディタ	AvalonEditによるシンタックスハイライト、IntelliSense（補完）
+F-04		ストリーミング表示	gRPCを用いた100万行規模データの非同期・高速グリッド表示
+F-05	可視化	自動ER図生成	各DBのメタデータからMSAGLを用いた自動配置ER図の生成
+F-06	インフラ	Docker連携	開発環境用DBMSコンテナ（8種）の一括起動・監視（既存環境CareLinkとの競合回避）
+1.4 非機能要件
+カテゴリ	要件	目標値・制約
+性能効率性	応答速度	大規模データ取得開始まで 500ms 以内（gRPC通信）
+表示性能	UI仮想化により、10万行スクロール時もFPS 60を維持
+保守性	拡張性	新規DBMSドライバの追加をインターフェース実装のみで完結させる
+移植性	環境依存	クライアントはWindows 10/11専用。サーバー（API）はLinux Docker対応
+ライセンス	権利	使用する全ライブラリはMIT, Apache 2.0等のフリーライセンスに限定
+2. 基本設計書 (Basic Design)
+2.1 システムアーキテクチャ
+3層構造の分散型アーキテクチャを採用。
+プレゼンテーション層 (WPF Client): UI/UX、グラフ描画（MSAGL）、ローカルDB接続。
+アプリケーション通信層 (gRPC / HTTP2): 高速データ転送、プロトコル定義。
+データアクセス層 (ASP.NET Core API / Docker): ターゲットDBへの接続、クエリ実行。
+2.2 サブシステム構成
+Connection Manager: 接続プロファイルの永続化と、各DBドライバの動的ロード。
+Query Engine: 各DBMSの方言を吸収し、gRPCストリームへ変換する実行エンジン。
+Visualization Engine:
+Grid View: 仮想化DataGridによる行データ表示。
+Graph View: MSAGLによるテーブル相関図（ER図）の算出・描画。
+2.3 データベース環境設計 (Docker)
+既存の「CareLink Platform」と競合しないよう、以下のポートマッピングを規定。
+NeoDB API: 50051
+NeoDB MySQL: 3307 (CareLink: 3306)
+NeoDB MariaDB: 3308
+NeoDB Redis: 6380 (CareLink: 6379)
+他、PostgreSQL(5432), MSSQL(1433), Oracle(1521), MongoDB(27017) は標準を使用。
+3. 詳細設計書 (Detailed Design)
+3.1 クラス設計 (Interface Strategy)
+多種DBを共通に扱うため、Provider Pattern を採用。
+code
+C#
+public interface IDbProvider {
+    // 接続テスト
+    Task<bool> TestConnectionAsync(string connectionString);
+    // 検索実行 (gRPCストリーミング用)
+    IAsyncEnumerable<RowData> ExecuteQueryStream(string connectionString, string sql);
+    // メタデータ取得 (ER図用)
+    Task<DbSchema> GetSchemaAsync(string connectionString);
+}
+3.2 通信プロトコル仕様 (gRPC Protocol Buffers)
+動的な型（RDBMSの行データ、NoSQLのJSON）を柔軟に転送するための定義。
+code
+Protobuf
+message QueryResponse {
+  oneof payload {
+    ColumnHeader header = 1; // カラム定義
+    RowData row = 2;         // 行データ(文字列配列)
+    string json_content = 3; // MongoDB等用JSON
+    string error = 4;        // 例外情報
+  }
+}
+3.3 ER図自動生成ロジック (MSAGL Integration)
+リバース工程: 各DBプロバイダが INFORMATION_SCHEMA.KEY_COLUMN_USAGE 等をクエリし、FK情報を抽出。
+グラフ構築: 取得したテーブルを Node、FKを Edge として MSAGL Graph オブジェクトに登録。
+配置算出: SugiyamaLayoutSettings アルゴリズムを適用し、エッジの交差を最小化した座標を算出。
+描画: GViewer (WPFコントロール) を AvalonDock の LayoutDocument 内にホストして表示。
+3.4 データベース操作内部ロジック (Query Execution)
+Dapper利用: サーバー側での IDataReader からのデータ抽出を高速化。
+非同期イテレータ: yield return を用いたメモリ消費を抑えた逐次データ転送。
+4. 実装ガイドライン（他AI・エンジニア向け）
+4.1 プロジェクト構成
+NeoDbStudio.Shared: db_service.proto を含み、Client/API両方で参照する。
+NeoDbStudio.Api: ステートレスなgRPCサーバー。DBドライバを全集約。
+NeoDbStudio.Client: WPFプロジェクト。ViewModelに GrpcChannel を保持し、View側は ModernWPF スタイルを適用。
+4.2 開発時の注意点
+マルチスレッド: gRPCの受信処理は Task.Run または await foreach で行い、UIスレッドをロックしないこと。
+エラーハンドリング: DB接続エラー、SQL構文エラーは RpcException としてサーバーからスローし、クライアント側で ModernWPF.ContentDialog を用いて通知すること。
+依存関係: ODBC 接続はクライアント側（WPF）で直接処理する実装を検討すること（ドライバがWindowsに依存するため）。
+まとめ
+このドキュメントは、機能（What）、構成（How）、環境（Where）を網羅しています。
+この情報をベースに、「gRPCサービスの追加」や「MSAGLのカスタマイズ」といった特定の指示を出すことで、AIは極めて正確なコードを生成することが可能です。
+次に、この設計に基づいた**「特定の機能（例：SQL実行部分の詳細シーケンス）」や「単体テスト仕様」**の作成が必要であれば指示してください。

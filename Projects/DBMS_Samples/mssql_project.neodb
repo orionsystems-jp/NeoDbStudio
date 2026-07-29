@@ -1,0 +1,8 @@
+{
+  "ProjectName": "Microsoft SQL Server Financial Core (1,000+ Bilingual Records)",
+  "ProviderType": "MSSQL",
+  "ConnectionString": "Server=127.0.0.1,1433;Database=neodb;User Id=sa;Password=Password123!;TrustServerCertificate=True;",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "SQL Server (MSSQL)用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルテーブル（users, products, orders）完備。"
+}

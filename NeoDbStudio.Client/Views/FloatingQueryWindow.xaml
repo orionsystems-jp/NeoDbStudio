@@ -1,0 +1,79 @@
+<Window x:Class="NeoDbStudio.Client.Views.FloatingQueryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        xmlns:avalonEdit="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+        xmlns:helpers="clr-namespace:NeoDbStudio.Client.Helpers"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="{Binding Title, StringFormat='🗔 {0} - Floating Query Window'}"
+        Height="700" Width="1000" WindowStartupLocation="CenterScreen" Background="#1E1E1E">
+
+    <Grid Margin="6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Floating Header Toolbar -->
+            <RowDefinition Height="1.2*"/>  <!-- SQL Editor -->
+            <RowDefinition Height="5"/>    <!-- Splitter -->
+            <RowDefinition Height="1*"/>    <!-- DataGrid Result -->
+        </Grid.RowDefinitions>
+
+        <!-- Floating Toolbar -->
+        <Border Grid.Row="0" Background="#252526" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,0,0,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🗔 Separated Floating Query Window" FontWeight="Bold" Foreground="#1E90FF" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="14"/>
+                    <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" FontSize="13"/>
+                </StackPanel>
+                
+                <!-- Clean Single Icon Execute Button -->
+                <Button Grid.Column="1" Command="{Binding ExecuteQueryCommand}" Background="#2E8B57" Foreground="White" Height="32" Padding="14,0" ui:ControlHelper.CornerRadius="4" FontWeight="Bold">
+                    <TextBlock Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Btn_ExecuteQuery]}" VerticalAlignment="Center" FontSize="12"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- SQL Editor -->
+        <avalonEdit:TextEditor x:Name="FloatingSqlEditor" Grid.Row="1" FontFamily="Consolas" FontSize="14" Foreground="#569CD6" ShowLineNumbers="True" Margin="2"/>
+
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" Background="#3F3F46"/>
+
+        <!-- Query Result DataGrid & Paging -->
+        <Grid Grid.Row="3" Margin="0,4,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Paging Toolbar -->
+            <Border Grid.Row="0" Background="#252526" BorderBrush="#3F3F46" BorderThickness="0,0,0,1" Padding="6,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Label_ResultDataGrid]}" FontWeight="Bold" Foreground="#1E90FF"/>
+                        <TextBlock Text="{Binding TotalRowCount}" FontWeight="Bold" Foreground="#1E90FF"/>
+                        <TextBlock Text=" rows total):" FontWeight="Bold" Foreground="#1E90FF"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding FirstPageCommand}" Content="⏮" Width="28" Height="24" Margin="0,0,2,0"/>
+                        <Button Command="{Binding PreviousPageCommand}" Content="◀" Width="28" Height="24" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding PageIndex}" FontWeight="Bold" Foreground="#1E90FF" VerticalAlignment="Center" FontSize="11"/>
+                        <TextBlock Text=" / " VerticalAlignment="Center" Foreground="#FFFFFF" FontSize="11"/>
+                        <TextBlock Text="{Binding TotalPages}" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" FontSize="11" Margin="0,0,6,0"/>
+                        <Button Command="{Binding NextPageCommand}" Content="▶" Width="28" Height="24" Margin="0,0,2,0"/>
+                        <Button Command="{Binding LastPageCommand}" Content="⏭" Width="28" Height="24"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Virtualized DataGrid -->
+            <DataGrid Grid.Row="1" ItemsSource="{Binding ResultTable}" AutoGenerateColumns="True" IsReadOnly="True" GridLinesVisibility="All" Margin="2"/>
+        </Grid>
+    </Grid>
+</Window>

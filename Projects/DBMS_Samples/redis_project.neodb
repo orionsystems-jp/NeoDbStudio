@@ -1,0 +1,8 @@
+{
+  "ProjectName": "Redis Key-Value Cache Cluster (1,000+ Bilingual Records)",
+  "ProviderType": "Redis",
+  "ConnectionString": "127.0.0.1:6380,allowAdmin=true",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "Redis In-Memory Key-Value用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルKeyデータセット完備。"
+}

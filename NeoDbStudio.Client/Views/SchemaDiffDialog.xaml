@@ -1,0 +1,66 @@
+<Window x:Class="NeoDbStudio.Client.Views.SchemaDiffDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="Schema Comparison"
+        Height="640" Width="820"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="#1E1E1E">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="Auto"/> <!-- Connection inputs -->
+            <RowDefinition Height="*"/>    <!-- Diff results -->
+            <RowDefinition Height="Auto"/> <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="🔍 Schema Comparison" FontSize="18" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,14"/>
+
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Source (現在の接続)" Foreground="#F0F0F0" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,10"/>
+            <TextBlock x:Name="TxtSourceInfo" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#AAAAAA" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,0,10"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Target 接続文字列" Foreground="#F0F0F0" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,10"/>
+            <TextBox x:Name="TxtTargetConnectionString" Grid.Row="1" Grid.Column="1" Height="32" Margin="0,0,0,10" ui:ControlHelper.PlaceholderText="比較対象の接続文字列を入力（同一プロバイダーのみ対応）"/>
+
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="BtnCompare" Content="🔍 Compare" Click="BtnCompare_Click" Background="#008080" Foreground="White" Height="34" Padding="14,0" FontWeight="Bold" Margin="0,0,8,0"/>
+                <Button x:Name="BtnGenerateSync" Content="⚙ Generate Sync Script (Target ← Source)" Click="BtnGenerateSync_Click" IsEnabled="False" Background="#DAA520" Foreground="White" Height="34" Padding="14,0" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+
+        <TabControl Grid.Row="2" Margin="0,0,0,14">
+            <TabItem Header="ソースのみに存在するテーブル">
+                <ListBox x:Name="ListTablesOnlyInSource" Foreground="#F0F0F0" Background="#252526"/>
+            </TabItem>
+            <TabItem Header="ターゲットのみに存在するテーブル">
+                <ListBox x:Name="ListTablesOnlyInTarget" Foreground="#F0F0F0" Background="#252526"/>
+            </TabItem>
+            <TabItem Header="共通テーブルの列差分">
+                <TreeView x:Name="TreeCommonTableDiffs" Background="#252526" Foreground="#F0F0F0"/>
+            </TabItem>
+        </TabControl>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="接続文字列を入力し「Compare」を押してください。" Foreground="#AAAAAA" FontSize="11" VerticalAlignment="Center"/>
+            <Button x:Name="BtnClose" Grid.Column="1" Content="Close" Click="BtnClose_Click" Height="34" Padding="18,0"/>
+        </Grid>
+    </Grid>
+</Window>

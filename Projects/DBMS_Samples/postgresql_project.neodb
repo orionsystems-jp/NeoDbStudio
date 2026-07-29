@@ -1,0 +1,8 @@
+{
+  "ProjectName": "PostgreSQL Production Enterprise (1,000+ Bilingual Records)",
+  "ProviderType": "PostgreSQL",
+  "ConnectionString": "Host=127.0.0.1;Port=5432;Database=neodb;Username=postgres;Password=password;",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "PostgreSQL用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルテーブル（users, products, orders）完備。"
+}

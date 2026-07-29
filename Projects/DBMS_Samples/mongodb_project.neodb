@@ -1,0 +1,8 @@
+{
+  "ProjectName": "MongoDB Document Analytics (1,000+ Bilingual Records)",
+  "ProviderType": "MongoDB",
+  "ConnectionString": "mongodb://127.0.0.1:27017/neodb",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "MongoDB NoSQL用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルDocumentコレクション（users, products, orders）完備。"
+}

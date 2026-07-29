@@ -1,0 +1,8 @@
+{
+  "ProjectName": "Oracle Global Enterprise ERP (1,000+ Bilingual Records)",
+  "ProviderType": "Oracle",
+  "ConnectionString": "Data Source=127.0.0.1:1521/FREEPDB1;User Id=neodb;Password=Password123!;",
+  "CreatedAt": "2026-07-29T00:47:00Z",
+  "LastOpenedAt": "2026-07-29T00:47:00Z",
+  "Description": "Oracle Database用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルテーブル（users, products, orders）完備。"
+}

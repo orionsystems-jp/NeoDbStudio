@@ -1,0 +1,18 @@
+{
+  "ProjectName": "Docker DBMS Production Cluster (1,000+ Bilingual Records)",
+  "ProviderType": "MySQL",
+  "ConnectionString": "Server=127.0.0.1;Port=3307;Database=neodb;Uid=root;Pwd=password;CharSet=utf8mb4;",
+  "CreatedAt": "2026-07-29T00:46:00Z",
+  "LastOpenedAt": "2026-07-29T00:46:00Z",
+  "Description": "Dockerコンテナ上で稼働するMySQL/PostgreSQL用接続プロジェクトファイル。英語・日本語の多言語1,000件超のテーブル（users, products, orders）を完備。",
+  "SavedQueryTabs": [
+    {
+      "Title": "1000_bilingual_users.sql",
+      "SqlScript": "-- 1,000件の日本語・英語バイリンガルユーザーデータの取得\nSELECT \n    user_id AS 'ID',\n    user_code AS 'ユーザーコード',\n    username_en AS 'Username (EN)',\n    username_ja AS '氏名 (日本語)',\n    email AS 'メールアドレス',\n    department_ja AS '所属部署',\n    role_ja AS '役職',\n    salary AS '給与額',\n    created_at AS '登録日時'\nFROM users \nORDER BY user_id ASC \nLIMIT 1000;"
+    },
+    {
+      "Title": "1000_relational_orders.sql",
+      "SqlScript": "-- 1,000件の注文トランザクションデータとリレーションJOINクエリ\nSELECT \n    o.order_id AS '注文ID',\n    o.order_no AS '注文番号',\n    u.username_ja AS '注文者氏名',\n    p.product_name_ja AS '購入商品名',\n    o.quantity AS '数量',\n    o.unit_price AS '単価',\n    o.total_amount AS '合計金額',\n    o.payment_status_ja AS '決済ステータス',\n    o.ordered_at AS '注文日時'\nFROM orders o\nINNER JOIN users u ON o.user_id = u.user_id\nINNER JOIN products p ON o.product_id = p.product_id\nORDER BY o.order_id ASC\nLIMIT 1000;"
+    }
+  ]
+}

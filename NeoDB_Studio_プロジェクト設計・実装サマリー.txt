@@ -1,0 +1,55 @@
+NeoDB Studio プロジェクト設計・実装サマリー
+1. コンセプトと目標
+名称: NeoDB Studio
+目標: A5:SQL Mk-2の軽快さを継承しつつ、.NET 8、gRPC、MSAGL等の最新技術を用いて、操作性、描画速度、拡張性を大幅に強化する。
+特徴:
+gRPCによる100万行規模データの高速ストリーミング表示。
+MSAGLを用いた、重なりのない美しいER図の自動生成。
+主要DBMS（RDBMS, NoSQL, KVS）のオールインワン管理。
+既存の開発環境（CareLink Platform）と競合しないDockerサンドボックス。
+キラー機能: ストアドプロシージャのデバッグ機能（ステップ実行・変数ウォッチ）。
+2. 技術スタック（IPA準拠・ライセンスフリー）
+全て商用利用可能なフリーライセンス（MIT/Apache 2.0等）で構成されています。
+カテゴリ	採用技術	役割
+フレームワーク	.NET 8 (WPF)	クライアントサイド基盤
+通信	gRPC (HTTP/2)	API間高速バイナリ通信
+UIライブラリ	ModernWpfUI / AvalonDock (Dirkster版)	モダンな外観と、VS風の分割・タブ管理
+エディタ	AvalonEdit	SQLシンタックスハイライト、補完
+ER図エンジン	AutomaticGraphLayout (MSAGL)	自動配置・リバースモデリング
+ORM	Dapper	高速データアクセス
+インフラ	Docker / Docker Compose	8種のDBMSサンドボックス環境
+3. システムアーキテクチャ（3層構造）
+プレゼンテーション層 (WPF Client):
+UI/UX、グラフ描画、ローカルODBC接続を担当。
+アプリケーション通信層 (gRPC):
+プロトコルバッファを用いた動的な型マッピング（RDBMS/NoSQL対応）。
+データアクセス層 (ASP.NET Core API):
+各DBMSへの接続、クエリ実行、デバッグ制御を担当。
+4. データベース環境（Docker構成）
+既存のCareLink環境と競合しないよう、以下のポートマッピングを規定。
+NeoDB API: 50051 (gRPC)
+Postgres: 5432 / MySQL: 3307 / MariaDB: 3308 / SQL Server: 1433
+Oracle: 1521 / MongoDB: 27017 / Redis: 6380
+5. 解決済みの重要課題（トラブルシューティング）
+開発の初期ビルドで発生した以下の問題を解決済みです。
+gRPCの生成: NeoDbStudio.Shared を先にビルドし、Protoファイルから QueryRequest 等のC#クラスを自動生成する手順を確立。
+AvalonDockの互換性: Dirkster.AvalonDock を採用し、XAML名前空間を http://schemas.xceed.com/wpf/xaml/avalondock に固定することでビルドを安定化。
+MSAGLの組み込み: AutomaticGraphLayoutControl を用いたWPFへのER図ホスト方法を確立。
+Docker YAMLエラー: PowerShell生成時のエスケープ文字およびUTF-8 BOM問題を解決。
+6. プロジェクト資産の生成方法
+現在、以下の内容を自動生成する setup.ps1 が完成しています。
+ソリューション構造（Shared, Api, Client）。
+主要なNuGetパッケージの自動インストール。
+gRPCのDbService実装、WPFのMainWindow（ER図表示付）の雛形。
+全部入りの docker-compose.neodb.yml。
+7. 次のフェーズの指示案
+他のAIやエンジニアに指示を出す際、以下の項目を順次依頼してください。
+「gRPCによる実データのDataGrid表示の実装」
+指示内容：DbService.cs で取得した stream QueryResponse を WPFの ObservableCollection に変換し、DataGrid にバインドする ViewModel 側のロジックを作成せよ。
+「MSAGLのリバースエンジニアリング連携」
+指示内容：指定されたDB接続情報から INFORMATION_SCHEMA をクエリし、テーブルと外部キー情報を取得して MSAGL のノードとエッジを動的に生成する機能を作成せよ。
+「ストアドプロシージャデバッグのプロトタイプ」
+指示内容：gRPCの双方向ストリーミングを用い、サーバー側の実行行番号をリアルタイムにWPFのAvalonEdit上でハイライトするデバッグ制御のプロトタイプを作成せよ。
+この整理内容があれば、誰でもこのプロジェクトの全体像を把握し、即座に開発を継続できます。
+info
+Google AI models may make mistakes, so double-check outputs.

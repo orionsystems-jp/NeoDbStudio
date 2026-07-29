@@ -1,0 +1,107 @@
+<Window x:Class="NeoDbStudio.Client.Views.LicenseViewerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="Software Licenses &amp; Copyright Notices - NeoDB Studio" 
+        Height="680" Width="880" WindowStartupLocation="CenterOwner" Background="#1E1E1E" Foreground="#F0F0F0">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Title & Notice Banner -->
+            <RowDefinition Height="*"/>    <!-- License Content Tabs / List -->
+            <RowDefinition Height="Auto"/> <!-- Close Button Area -->
+        </Grid.RowDefinitions>
+
+        <!-- Header Title Banner -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="📜 NeoDB Studio &amp; Third-Party Open Source Licenses" FontSize="20" FontWeight="ExtraBold" Foreground="#1E90FF"/>
+            </StackPanel>
+            <TextBlock Text="NeoDB Studio の製品ライセンス (MIT License) および本システムで使用しているオープンソースソフトウェアのライセンス条文です。" Foreground="#AAAAAA" FontSize="12"/>
+        </StackPanel>
+
+        <!-- License Tab & Details View -->
+        <TabControl Grid.Row="1" Background="#252526" BorderBrush="#3F3F46">
+
+            <!-- Tab 0: Main Application MIT License (Orion Systems) -->
+            <TabItem Header="⚡ NeoDB Studio (MIT License)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="NeoDB Studio Engine" FontSize="18" FontWeight="ExtraBold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="Copyright (c) 2026 オリオンシステムズ (Orion Systems)" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,6"/>
+                        <Border Background="#3E3E42" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left" Margin="0,0,0,12">
+                            <TextBlock Text="License: MIT License (Free &amp; Open Source Software)" FontWeight="Bold" Foreground="#90EE90" FontSize="12"/>
+                        </Border>
+                        
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Background="#1E1E1E" Foreground="#DDDDDD" Padding="12" BorderBrush="#3F3F46"
+                                 Text="MIT License&#10;&#10;Copyright (c) 2026 オリオンシステムズ (Orion Systems)&#10;&#10;Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:&#10;&#10;The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.&#10;&#10;THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 1: AvalonEdit -->
+            <TabItem Header="ICSharpCode.AvalonEdit (MIT)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="ICSharpCode.AvalonEdit" FontSize="16" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="License: MIT License" FontWeight="SemiBold" Foreground="#90EE90" Margin="0,0,0,10"/>
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="11" Background="#1E1E1E" Foreground="#DDDDDD" Padding="10" BorderBrush="#3F3F46"
+                                 Text="Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team&#10;&#10;Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:&#10;&#10;The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.&#10;&#10;THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 2: MSAGL -->
+            <TabItem Header="Microsoft.Msagl (MIT / MS-PL)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Microsoft Automatic Graph Layout (MSAGL)" FontSize="16" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="License: MIT License / Microsoft Public License" FontWeight="SemiBold" Foreground="#90EE90" Margin="0,0,0,10"/>
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="11" Background="#1E1E1E" Foreground="#DDDDDD" Padding="10" BorderBrush="#3F3F46"
+                                 Text="Copyright (c) Microsoft Corporation. All rights reserved.&#10;&#10;Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:&#10;&#10;The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 3: gRPC & Protobuf -->
+            <TabItem Header="gRPC &amp; Protocol Buffers (Apache 2.0)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="gRPC &amp; Google Protocol Buffers (.NET)" FontSize="16" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="License: Apache License 2.0" FontWeight="SemiBold" Foreground="#90EE90" Margin="0,0,0,10"/>
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="11" Background="#1E1E1E" Foreground="#DDDDDD" Padding="10" BorderBrush="#3F3F46"
+                                 Text="Copyright 2019 gRPC authors.&#10;&#10;Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License. You may obtain a copy of the License at&#10;&#10;    http://www.apache.org/licenses/LICENSE-2.0&#10;&#10;Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 4: ModernWpfUI & CommunityToolkit -->
+            <TabItem Header="ModernWpfUI &amp; CommunityToolkit (MIT)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="ModernWpfUI &amp; .NET Community Toolkit" FontSize="16" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="License: MIT License" FontWeight="SemiBold" Foreground="#90EE90" Margin="0,0,0,10"/>
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="11" Background="#1E1E1E" Foreground="#DDDDDD" Padding="10" BorderBrush="#3F3F46"
+                                 Text="Copyright (c) Yuxuan KANG / Microsoft Corporation.&#10;&#10;Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 5: DBMS Drivers -->
+            <TabItem Header="DBMS Provider Drivers (Npgsql / MySql)">
+                <ScrollViewer Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Npgsql, MySqlConnector, Microsoft.Data.SqlClient, System.Data.SQLite" FontSize="16" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+                        <TextBlock Text="License: PostgreSQL License / MIT License / Apache 2.0" FontWeight="SemiBold" Foreground="#90EE90" Margin="0,0,0,10"/>
+                        <TextBox TextWrapping="Wrap" IsReadOnly="True" FontFamily="Consolas" FontSize="11" Background="#1E1E1E" Foreground="#DDDDDD" Padding="10" BorderBrush="#3F3F46"
+                                 Text="Copyright (c) Npgsql Development Team / MySqlConnector Authors / Microsoft Corporation.&#10;&#10;Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Close Button -->
+        <Button Grid.Row="2" Content="閉じる" Click="CloseButton_Click" Width="120" Height="36" Background="#3E3E42" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right" Margin="0,15,0,0"/>
+    </Grid>
+</Window>

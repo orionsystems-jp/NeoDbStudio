@@ -1,0 +1,155 @@
+syntax = "proto3";
+package neodb.grpc;
+option csharp_namespace = "NeoDbStudio.Shared";
+
+service DbEngine {
+  rpc ExecuteQuery (QueryRequest) returns (stream QueryResponse);
+  rpc GetSchema (SchemaRequest) returns (SchemaResponse);
+  rpc DebugProcedure (stream DebugCommand) returns (stream DebugEvent);
+  rpc BeginTransaction (BeginTransactionRequest) returns (BeginTransactionResponse);
+  rpc CommitTransaction (TransactionSessionRequest) returns (TransactionAck);
+  rpc RollbackTransaction (TransactionSessionRequest) returns (TransactionAck);
+}
+
+message QueryRequest {
+  string provider_type = 1; // postgres, mysql, mssql, mongodb, redis
+  string connection_string = 2;
+  string sql = 3;
+  SshTunnelConfig ssh_tunnel = 4; // 未使用時は enabled=false のまま送信
+  string session_id = 5; // BeginTransaction で発行されたセッションID（トランザクション未使用時は空）
+  int32 page_size = 6;   // 0 = ページングなし（従来どおり全件取得）。単純な単一 SELECT 文のみ対象
+  int32 page_offset = 7; // page_size > 0 の場合の開始オフセット（0始まり）
+}
+
+// --- トランザクション制御（オートコミットOFF時：接続をセッションとして保持しBEGIN/COMMIT/ROLLBACKを可能にする） ---
+message BeginTransactionRequest {
+  string provider_type = 1;
+  string connection_string = 2;
+  SshTunnelConfig ssh_tunnel = 3;
+}
+
+message BeginTransactionResponse {
+  bool success = 1;
+  string session_id = 2;
+  string error_message = 3;
+}
+
+message TransactionSessionRequest {
+  string session_id = 1;
+}
+
+message TransactionAck {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// --- SSH Tunnel（踏み台サーバー経由でのDB接続。本番DBがプライベートIPのみ公開の場合に使用） ---
+message SshTunnelConfig {
+  bool enabled = 1;
+  string host = 2;               // SSH 踏み台サーバーのホスト名/IP
+  int32 port = 3;                // SSH ポート（既定 22）
+  string username = 4;
+  string auth_type = 5;          // "password" or "key"
+  string password = 6;
+  string private_key_path = 7;
+  string passphrase = 8;
+  string remote_host = 9;        // SSHサーバーから見た DB ホスト（例: 127.0.0.1）
+  int32 remote_port = 10;        // SSHサーバーから見た DB ポート
+}
+
+message QueryResponse {
+  oneof payload {
+    ColumnHeader header = 1;
+    RowData row = 2;
+    string json_content = 3; // For NoSQL / MongoDB
+  }
+}
+
+message ColumnHeader { repeated string names = 1; }
+message RowData { repeated string values = 1; }
+
+// --- ER Diagram / Reverse Engineering Schema ---
+message SchemaRequest {
+  string provider_type = 1;
+  string connection_string = 2;
+  SshTunnelConfig ssh_tunnel = 3; // 未使用時は enabled=false のまま送信
+}
+
+message ColumnSchema {
+  string name = 1;
+  string data_type = 2;
+  bool is_primary_key = 3;
+  bool is_nullable = 4;
+}
+
+message TableSchema {
+  string name = 1;
+  repeated ColumnSchema columns = 2;
+  repeated IndexSchema indexes = 3;
+}
+
+message IndexSchema {
+  string name = 1;
+  bool is_unique = 2;
+  repeated string columns = 3; // 構成カラム名（順序付き）
+}
+
+message ForeignKeySchema {
+  string constraint_name = 1;
+  string pk_table = 2;
+  string pk_column = 3;
+  string fk_table = 4;
+  string fk_column = 5;
+}
+
+message SchemaResponse {
+  repeated TableSchema tables = 1;
+  repeated ForeignKeySchema foreign_keys = 2;
+  repeated TableSchema views = 3;        // ビュー（テーブルと同じ列構成を持つため TableSchema を再利用）
+  repeated RoutineSchema procedures = 4; // ストアドプロシージャ・ファンクション一覧
+}
+
+message RoutineSchema {
+  string name = 1;
+  string routine_type = 2; // "PROCEDURE" / "FUNCTION" / "PACKAGE" 等
+}
+
+// --- Stored Procedure Debugging ---
+enum DebugAction {
+  ACTION_UNKNOWN = 0;
+  ACTION_START = 1;
+  ACTION_STEP_OVER = 2;
+  ACTION_STEP_INTO = 3;
+  ACTION_CONTINUE = 4;
+  ACTION_STOP = 5;
+}
+
+message DebugCommand {
+  DebugAction action = 1;
+  string provider_type = 2;
+  string connection_string = 3;
+  string procedure_name = 4;
+  string sql_script = 5;
+}
+
+enum DebugEventType {
+  EVENT_UNKNOWN = 0;
+  EVENT_STARTED = 1;
+  EVENT_LINE_HIT = 2;
+  EVENT_VARIABLE_UPDATE = 3;
+  EVENT_COMPLETED = 4;
+  EVENT_ERROR = 5;
+}
+
+message VariableInfo {
+  string name = 1;
+  string value = 2;
+  string data_type = 3;
+}
+
+message DebugEvent {
+  DebugEventType event_type = 1;
+  int32 line_number = 2;
+  repeated VariableInfo variables = 3;
+  string message = 4;
+}

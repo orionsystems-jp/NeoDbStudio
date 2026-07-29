@@ -1,0 +1,27 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+*.pdb
+
+# Visual Studio / Rider
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# WPF temporary build-generated project files
+*_wpftmp.csproj
+
+# Test results
+TestResults/
+
+# NeoDB Studio: local-only connection data containing real production credentials.
+# These files are DPAPI-encrypted (decryptable only on the original author's Windows
+# account) but still reveal real system topology and must never be published.
+Projects/CareLink_CareTransport/
+Projects/recent_history.json
+
+# OS-generated files
+Thumbs.db
+.DS_Store

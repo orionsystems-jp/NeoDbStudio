@@ -1,0 +1,176 @@
+<Window x:Class="NeoDbStudio.Client.Views.ConnectionWizardDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        xmlns:helpers="clr-namespace:NeoDbStudio.Client.Helpers"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Title]}"
+        Height="680" Width="720"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Loaded="Window_Loaded"
+        Background="#1E1E1E">
+
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header / Title -->
+            <RowDefinition Height="*"/>    <!-- Perfectly Aligned Grid Form Area -->
+            <RowDefinition Height="Auto"/> <!-- Footer / Action Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- Header (Clean Single Icon Guaranteed) -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Header]}" FontSize="18" FontWeight="Bold" Foreground="#1E90FF" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_SubHeader]}" FontSize="12" Foreground="#AAAAAA"/>
+        </StackPanel>
+
+        <!-- Main Form Area: Perfectly Aligned 2-Column Grid Layout -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+            <Grid Margin="0,0,16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170"/> <!-- Fixed Width Label Column -->
+                    <ColumnDefinition Width="*"/>   <!-- Flexible Input Control Column -->
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- 0: Provider -->
+                    <RowDefinition Height="Auto"/> <!-- 1: Auth Type -->
+                    <RowDefinition Height="Auto"/> <!-- 2: Host -->
+                    <RowDefinition Height="Auto"/> <!-- 3: Port -->
+                    <RowDefinition Height="Auto"/> <!-- 4: Database -->
+                    <RowDefinition Height="Auto"/> <!-- 5: Username -->
+                    <RowDefinition Height="Auto"/> <!-- 6: Password -->
+                    <RowDefinition Height="Auto"/> <!-- 7: Connection String Preview -->
+                    <RowDefinition Height="Auto"/> <!-- 8: SSH Section Header -->
+                    <RowDefinition Height="Auto"/> <!-- 9: SSH Enabled -->
+                    <RowDefinition Height="Auto"/> <!-- 10: SSH Host -->
+                    <RowDefinition Height="Auto"/> <!-- 11: SSH Port -->
+                    <RowDefinition Height="Auto"/> <!-- 12: SSH Username -->
+                    <RowDefinition Height="Auto"/> <!-- 13: SSH Auth Type -->
+                    <RowDefinition Height="Auto"/> <!-- 14: SSH Password -->
+                    <RowDefinition Height="Auto"/> <!-- 15: SSH Private Key Path -->
+                    <RowDefinition Height="Auto"/> <!-- 16: SSH Passphrase -->
+                    <RowDefinition Height="Auto"/> <!-- 17: SSH Remote Host -->
+                    <RowDefinition Height="Auto"/> <!-- 18: SSH Remote Port -->
+                    <RowDefinition Height="Auto"/> <!-- 19: Status Display -->
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: DBMS Provider ComboBox -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Provider]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <ComboBox x:Name="CmbProvider" Grid.Row="0" Grid.Column="1" SelectionChanged="CmbProvider_SelectionChanged" Height="36" HorizontalAlignment="Stretch" Margin="0,0,0,12">
+                    <ComboBoxItem Content="PostgreSQL" IsSelected="True"/>
+                    <ComboBoxItem Content="MySQL"/>
+                    <ComboBoxItem Content="MariaDB"/>
+                    <ComboBoxItem Content="SQL Server"/>
+                    <ComboBoxItem Content="Oracle"/>
+                    <ComboBoxItem Content="SQLite"/>
+                    <ComboBoxItem Content="MongoDB"/>
+                    <ComboBoxItem Content="Redis"/>
+                </ComboBox>
+
+                <!-- Row 1: Authentication Method ComboBox -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Auth]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <ComboBox x:Name="CmbAuthType" Grid.Row="1" Grid.Column="1" SelectionChanged="CmbAuthType_SelectionChanged" Height="36" HorizontalAlignment="Stretch" Margin="0,0,0,12"/>
+
+                <!-- Row 2: Host / IP Address -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Host]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtHost" Grid.Row="2" Grid.Column="1" Text="localhost" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 3: Port Number -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Port]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtPort" Grid.Row="3" Grid.Column="1" Text="5432" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 4: Database Name -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_DbName]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtDatabase" Grid.Row="4" Grid.Column="1" Text="neodb" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 5: Username -->
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Username]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtUsername" Grid.Row="5" Grid.Column="1" Text="postgres" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 6: Password -->
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_Password]}" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <PasswordBox x:Name="TxtPassword" Grid.Row="6" Grid.Column="1" PasswordChanged="TxtPassword_PasswordChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 7: Generated Connection String Preview -->
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_GenStr]}" FontWeight="SemiBold" Foreground="#1E90FF" VerticalAlignment="Top" Margin="0,4,10,12"/>
+                <TextBox x:Name="TxtConnectionString" Grid.Row="7" Grid.Column="1" IsReadOnly="True" TextWrapping="Wrap" Height="54" FontFamily="Consolas" FontSize="11" Background="#2D2D30" Foreground="#87CEFA" Margin="0,0,0,12"/>
+
+                <!-- Row 8: SSH Tunnel Section Header -->
+                <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Text="SSHトンネル (SSH Tunnel)" FontWeight="Bold" FontSize="13" Foreground="#1E90FF" Margin="0,8,0,10"/>
+
+                <!-- Row 9: SSH Tunnel Enabled -->
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="SSHトンネルを使用" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <CheckBox x:Name="ChkSshEnabled" Grid.Row="9" Grid.Column="1" Content="有効化 (Enable SSH Tunnel)" Foreground="#F0F0F0" VerticalAlignment="Center" Checked="SshOption_Changed" Unchecked="SshOption_Changed" Margin="0,0,0,12"/>
+
+                <!-- Row 10: SSH Host -->
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="SSH ホスト" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtSshHost" Grid.Row="10" Grid.Column="1" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 11: SSH Port -->
+                <TextBlock Grid.Row="11" Grid.Column="0" Text="SSH ポート" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtSshPort" Grid.Row="11" Grid.Column="1" Text="22" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 12: SSH Username -->
+                <TextBlock Grid.Row="12" Grid.Column="0" Text="SSH ユーザー名" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtSshUsername" Grid.Row="12" Grid.Column="1" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 13: SSH Auth Type -->
+                <TextBlock Grid.Row="13" Grid.Column="0" Text="SSH 認証方式" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <ComboBox x:Name="CmbSshAuthType" Grid.Row="13" Grid.Column="1" Height="36" Margin="0,0,0,12" SelectionChanged="SshOption_SelectionChanged">
+                    <ComboBoxItem Content="パスワード認証 (Password)" IsSelected="True"/>
+                    <ComboBoxItem Content="秘密鍵認証 (Private Key)"/>
+                </ComboBox>
+
+                <!-- Row 14: SSH Password -->
+                <TextBlock Grid.Row="14" Grid.Column="0" Text="SSH パスワード" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <PasswordBox x:Name="TxtSshPassword" Grid.Row="14" Grid.Column="1" PasswordChanged="TxtPassword_PasswordChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 15: SSH Private Key Path -->
+                <TextBlock Grid.Row="15" Grid.Column="0" Text="秘密鍵ファイル" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <Grid Grid.Row="15" Grid.Column="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TxtSshKeyPath" Grid.Column="0" TextChanged="Input_TextChanged" Height="36"/>
+                    <Button x:Name="BtnBrowseKey" Grid.Column="1" Content="参照..." Click="BtnBrowseKey_Click" Height="36" Padding="14,0" Margin="6,0,0,0"/>
+                </Grid>
+
+                <!-- Row 16: SSH Key Passphrase -->
+                <TextBlock Grid.Row="16" Grid.Column="0" Text="秘密鍵パスフレーズ" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <PasswordBox x:Name="TxtSshPassphrase" Grid.Row="16" Grid.Column="1" PasswordChanged="TxtPassword_PasswordChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 17: SSH Remote DB Host (as seen from the SSH server) -->
+                <TextBlock Grid.Row="17" Grid.Column="0" Text="転送先DBホスト" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtSshRemoteHost" Grid.Row="17" Grid.Column="1" Text="127.0.0.1" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 18: SSH Remote DB Port (as seen from the SSH server) -->
+                <TextBlock Grid.Row="18" Grid.Column="0" Text="転送先DBポート" FontWeight="SemiBold" Foreground="#F0F0F0" VerticalAlignment="Center" Margin="0,0,10,12"/>
+                <TextBox x:Name="TxtSshRemotePort" Grid.Row="18" Grid.Column="1" Text="3306" TextChanged="Input_TextChanged" Height="36" Margin="0,0,0,12"/>
+
+                <!-- Row 19: Connection Status Display -->
+                <Border Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="2" Background="#252526" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="4" Padding="12,8">
+                    <TextBlock x:Name="TxtStatus" Text="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_StatusReady]}" Foreground="#F0F0F0" TextWrapping="Wrap"/>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Footer / Action Buttons (Clean Single Icon Buttons) -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_BtnTest]}" Click="BtnTestConnection_Click" Height="38" Padding="18,0" ui:ControlHelper.CornerRadius="4"/>
+
+            <Button Grid.Column="2" Content="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_BtnOK]}" Click="BtnOk_Click" IsDefault="True" Background="#2E8B57" Foreground="White" Height="38" Padding="22,0" ui:ControlHelper.CornerRadius="4" FontWeight="Bold"/>
+
+            <Button Grid.Column="4" Content="{Binding Source={x:Static helpers:LocalizationManager.Instance}, Path=[Dlg_Conn_BtnCancel]}" Click="BtnCancel_Click" IsCancel="True" Height="38" Padding="22,0" ui:ControlHelper.CornerRadius="4"/>
+        </Grid>
+    </Grid>
+</Window>

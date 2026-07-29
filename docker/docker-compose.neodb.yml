@@ -1,0 +1,126 @@
+name: neodb-studio
+services:
+  # NeoDB gRPC API Server
+  neodb-api:
+    build:
+      context: ../
+      dockerfile: NeoDbStudio.Api/Dockerfile
+    container_name: neodb-api
+    ports:
+      - "50051:80"
+    networks:
+      - neodb-net
+
+  # 1. PostgreSQL 16
+  #    初期化スクリプトは PostgreSQL 方言版を使用する（MySQL 方言版とは非互換のため別ディレクトリ）
+  neodb-postgres:
+    image: postgres:16-alpine
+    container_name: neodb-postgres
+    environment:
+      POSTGRES_DB: neodb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../Scripts/docker_seed/postgres:/docker-entrypoint-initdb.d:ro
+    networks:
+      - neodb-net
+
+  # 2. MySQL 8.4 (Port 3307 to avoid CareLink 3306 conflicts)
+  neodb-mysql:
+    image: mysql:8.4
+    container_name: neodb-mysql
+    environment:
+      MYSQL_DATABASE: neodb
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ../Scripts/docker_seed:/docker-entrypoint-initdb.d:ro
+    networks:
+      - neodb-net
+
+  # 3. MariaDB 11 (Port 3308)
+  neodb-mariadb:
+    image: mariadb:11
+    container_name: neodb-mariadb
+    environment:
+      MARIADB_DATABASE: neodb
+      MARIADB_ROOT_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - ../Scripts/docker_seed:/docker-entrypoint-initdb.d:ro
+    networks:
+      - neodb-net
+
+  # 4. Microsoft SQL Server 2022 (Port 1433)
+  neodb-mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: neodb-mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Password123!"
+    ports:
+      - "1433:1433"
+    networks:
+      - neodb-net
+
+  # 5. Oracle Database Free 23c (Port 1521)
+  #    ORACLE_PWD を明示しないとイメージがランダムパスワードを生成し、接続情報を再現できないため固定する
+  neodb-oracle:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: neodb-oracle
+    environment:
+      ORACLE_PWD: "Password123!"
+    ports:
+      - "1521:1521"
+    networks:
+      - neodb-net
+
+  # 6. MongoDB (Port 27017)
+  #    MONGO_INITDB_DATABASE で指定した DB に対して初期化スクリプト (.js) が実行される
+  neodb-mongodb:
+    image: mongo:latest
+    container_name: neodb-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: neodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ../Scripts/docker_seed/mongo:/docker-entrypoint-initdb.d:ro
+    networks:
+      - neodb-net
+
+  # 7. Redis (Port 6380)
+  neodb-redis:
+    image: redis:7-alpine
+    container_name: neodb-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - neodb-net
+
+  # 8. ClickHouse Server (Port 8123)
+  neodb-clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: neodb-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - neodb-net
+
+  # 9. Apache Cassandra (Port 9042)
+  neodb-cassandra:
+    image: cassandra:latest
+    container_name: neodb-cassandra
+    ports:
+      - "9042:9042"
+    networks:
+      - neodb-net
+
+networks:
+  neodb-net:
+    driver: bridge
