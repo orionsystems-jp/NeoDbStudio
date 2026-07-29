@@ -19,7 +19,7 @@ F-06	インフラ	Docker連携	開発環境用DBMSコンテナ（8種）の一�
 表示性能	UI仮想化により、10万行スクロール時もFPS 60を維持
 保守性	拡張性	新規DBMSドライバの追加をインターフェース実装のみで完結させる
 移植性	環境依存	クライアントはWindows 10/11専用。サーバー（API）はLinux Docker対応
-ライセンス	権利	使用する全ライブラリはMIT, Apache 2.0等のフリーライセンスに限定
+ライセンス	権利	本体はMITライセンス。依存ライブラリは主にMIT/Apache 2.0系だが、Dirkster.AvalonDock（Ms-PL）およびOracle.ManagedDataAccess.Core（Oracle独自の再配布条件）の2件は例外。詳細は THIRD_PARTY_NOTICES.md を参照
 2. 基本設計書 (Basic Design)
 2.1 システムアーキテクチャ
 3層構造の分散型アーキテクチャを採用。
