@@ -174,6 +174,13 @@ public partial class MainViewModel : ObservableObject
     private readonly Dictionary<string, TableSchema> _lastSchemaTablesByName = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// 直近の LoadSchemaAsync で取得した完全なスキーマ応答（全テーブル・全ビュー・全FK）。
+    /// ER図はこの完全データからスキーマ選択・テーブル絞り込みに応じて都度再構築する
+    /// （大規模DB＝実データ規模で1枚のER図では視認不能になる問題への対応）。Excelエクスポートにも使用。
+    /// </summary>
+    private SchemaResponse? _lastFullSchemaResponse;
+
+    /// <summary>
     /// 直近取得済みスキーマから、指定テーブルの主キー列名一覧を取得します（結果グリッドのインライン編集で使用）。
     /// </summary>
     /// <param name="tableName">[パラメータ] 対象テーブル名を指定します。</param>
@@ -192,6 +199,16 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<DbObjectNode> DbObjectTree { get; } = new();
     public ObservableCollection<string> QueryHistory { get; } = new();
     public ObservableCollection<string> ExecutionLogs { get; } = new();
+
+    /// <summary>ER図タブのスキーマ（データベース）選択肢一覧。テーブル修飾名の先頭ドット区切り部分から抽出。</summary>
+    public ObservableCollection<string> ErDiagramSchemas { get; } = new();
+
+    /// <summary>ER図タブで現在選択中のスキーマ。変更時に自動でテーブル選択肢とER図を再構築する。</summary>
+    [ObservableProperty]
+    private string? _selectedErDiagramSchema;
+
+    /// <summary>選択中スキーマ内のテーブル絞り込みチェックボックス一覧（ER図表示専用フィルタ）。</summary>
+    public ObservableCollection<ErDiagramTableChoice> ErDiagramTableChoices { get; } = new();
 
     public ObservableCollection<string> Providers { get; } = new()
     {
@@ -215,6 +232,188 @@ public partial class MainViewModel : ObservableObject
     public event Action<int>? DebugLineChanged;
     public event Action? GraphUpdated;
     public event Action<AppTheme>? ThemeChanged;
+
+    #endregion
+
+    #region ER Diagram Schema Splitting & Excel Export
+
+    /// <summary>
+    /// スキーマ修飾名（"db.table"形式）からスキーマ（データベース）部分のみを抽出します。
+    /// ドットを含まない場合は既定スキーマとして扱います。
+    /// </summary>
+    private static string GetErDiagramSchemaGroup(string qualifiedName)
+    {
+        int dot = qualifiedName.IndexOf('.');
+        return dot > 0 ? qualifiedName.Substring(0, dot) : "(既定スキーマ)";
+    }
+
+    partial void OnSelectedErDiagramSchemaChanged(string? value)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.OnSelectedErDiagramSchemaChanged: {value}");
+            RebuildErDiagramTableChoices();
+            RebuildErDiagramGraph();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.OnSelectedErDiagramSchemaChanged: 例外発生 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 選択中スキーマ内の全テーブル・ビュー名から ErDiagramTableChoices を再構築します（既定は全選択状態）。
+    /// </summary>
+    private void RebuildErDiagramTableChoices()
+    {
+        ErDiagramTableChoices.Clear();
+
+        if (_lastFullSchemaResponse == null || string.IsNullOrEmpty(SelectedErDiagramSchema))
+        {
+            return;
+        }
+
+        var names = _lastFullSchemaResponse.Tables
+            .Where(t => GetErDiagramSchemaGroup(t.Name) == SelectedErDiagramSchema)
+            .Select(t => t.Name)
+            .Concat(_lastFullSchemaResponse.Views
+                .Where(v => GetErDiagramSchemaGroup(v.Name) == SelectedErDiagramSchema)
+                .Select(v => v.Name))
+            .OrderBy(n => n);
+
+        foreach (var name in names)
+        {
+            ErDiagramTableChoices.Add(new ErDiagramTableChoice(name));
+        }
+    }
+
+    /// <summary>
+    /// 選択中スキーマ・選択中テーブルのみを対象に MSAGL Graph を再構築し、ER図タブへ反映します。
+    /// 大規模DB（実データ規模で数百テーブル）でも1回のER図が視認可能なサイズに収まるよう、
+    /// 全テーブルを1枚に描画していた従来方式からスキーマ単位＋手動選択の絞り込み方式へ変更。
+    /// </summary>
+    private void RebuildErDiagramGraph()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.RebuildErDiagramGraph: 開始します");
+
+            if (_lastFullSchemaResponse == null || string.IsNullOrEmpty(SelectedErDiagramSchema))
+            {
+                return;
+            }
+
+            var selectedNames = new HashSet<string>(
+                ErDiagramTableChoices.Where(c => c.IsSelected).Select(c => c.Name),
+                StringComparer.Ordinal);
+
+            var tables = _lastFullSchemaResponse.Tables
+                .Where(t => GetErDiagramSchemaGroup(t.Name) == SelectedErDiagramSchema && selectedNames.Contains(t.Name))
+                .ToList();
+            var views = _lastFullSchemaResponse.Views
+                .Where(v => GetErDiagramSchemaGroup(v.Name) == SelectedErDiagramSchema && selectedNames.Contains(v.Name))
+                .ToList();
+
+            var g = new Graph("Reverse Engineered ER Diagram");
+            foreach (var t in tables)
+            {
+                var node = g.AddNode(t.Name);
+                var colList = t.Columns.Select(c => $"{c.Name}: {c.DataType}{(c.IsPrimaryKey ? " [PK]" : "")}");
+                node.LabelText = $"{t.Name}\n" + string.Join("\n", colList);
+                node.Attr.Shape = Shape.Box;
+                node.Attr.FillColor = MsaglColor.Azure;
+            }
+            foreach (var v in views)
+            {
+                var node = g.AddNode(v.Name);
+                var colList = v.Columns.Select(c => $"{c.Name}: {c.DataType}");
+                node.LabelText = $"👁 {v.Name}\n" + string.Join("\n", colList);
+                node.Attr.Shape = Shape.Box;
+                node.Attr.FillColor = MsaglColor.Lavender;
+            }
+            foreach (var fk in _lastFullSchemaResponse.ForeignKeys)
+            {
+                if (tables.Any(x => x.Name == fk.PkTable) && tables.Any(x => x.Name == fk.FkTable))
+                {
+                    var edge = g.AddEdge(fk.PkTable, fk.FkTable);
+                    edge.LabelText = fk.ConstraintName;
+                    edge.Attr.LineWidth = 2;
+                    edge.Attr.Color = MsaglColor.Blue;
+                }
+            }
+
+            Graph = g;
+            GraphUpdated?.Invoke();
+            StatusMessage = $"ER Diagram [{SelectedErDiagramSchema}]: {tables.Count} tables, {views.Count} views displayed.";
+
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.RebuildErDiagramGraph: 正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.RebuildErDiagramGraph: 例外発生 - {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void SelectAllErDiagramTables()
+    {
+        foreach (var choice in ErDiagramTableChoices)
+        {
+            choice.IsSelected = true;
+        }
+    }
+
+    [RelayCommand]
+    private void DeselectAllErDiagramTables()
+    {
+        foreach (var choice in ErDiagramTableChoices)
+        {
+            choice.IsSelected = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ApplyErDiagramFilter()
+    {
+        RebuildErDiagramGraph();
+    }
+
+    [RelayCommand]
+    private void ExportSchemaToExcel()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.ExportSchemaToExcel: 開始します");
+
+            if (_lastFullSchemaResponse == null)
+            {
+                MessageBox.Show("エクスポート対象のスキーマがありません。先にDBへ接続してください。", "Export to Excel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dlg = new SaveFileDialog
+            {
+                Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+                FileName = $"Schema_{ProjectName}.xlsx".Replace(' ', '_')
+            };
+            if (dlg.ShowDialog() != true)
+            {
+                return;
+            }
+
+            SchemaExcelExporter.Export(_lastFullSchemaResponse, dlg.FileName);
+
+            StatusMessage = $"Schema exported to Excel: {dlg.FileName}";
+            AddLogEntry($"Schema exported to Excel: {dlg.FileName}");
+
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.ExportSchemaToExcel: 正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.ExportSchemaToExcel: 例外発生 - {ex.Message}");
+            MessageBox.Show($"Excelエクスポートに失敗しました: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     #endregion
 
@@ -937,8 +1136,9 @@ public partial class MainViewModel : ObservableObject
         {
             if (node == null || string.IsNullOrWhiteSpace(node.Name)) return;
             string tableName = node.Name;
+            string quotedTableName = SqlIdentifierQuoter.Quote(SelectedProvider, tableName);
             System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.ScriptSelect: {tableName}");
-            AddQueryTab($"Select_{tableName}.sql", $"-- SSMS Script Table as SELECT\nSELECT * FROM {tableName} LIMIT 1000;");
+            AddQueryTab($"Select_{tableName}.sql", $"-- SSMS Script Table as SELECT\nSELECT * FROM {quotedTableName} LIMIT 1000;");
             StatusMessage = $"SELECT script generated for {tableName}.";
         }
         catch (Exception ex)
@@ -954,9 +1154,10 @@ public partial class MainViewModel : ObservableObject
         {
             if (node == null || string.IsNullOrWhiteSpace(node.Name)) return;
             string tableName = node.Name;
+            string quotedTableName = SqlIdentifierQuoter.Quote(SelectedProvider, tableName);
             System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.ScriptInsert: {tableName}");
 
-            string cols = node.Children.Count > 0 
+            string cols = node.Children.Count > 0
                 ? string.Join(", ", node.Children.Select(c => c.Name.Split(' ')[0]))
                 : "col1, col2, created_at";
 
@@ -964,7 +1165,7 @@ public partial class MainViewModel : ObservableObject
                 ? string.Join(", ", node.Children.Select(c => "'value'"))
                 : "1, 'value', NOW()";
 
-            string sql = $"-- SSMS Script Table as INSERT To\nINSERT INTO {tableName} (\n    {cols}\n)\nVALUES (\n    {vals}\n);";
+            string sql = $"-- SSMS Script Table as INSERT To\nINSERT INTO {quotedTableName} (\n    {cols}\n)\nVALUES (\n    {vals}\n);";
             AddQueryTab($"Insert_{tableName}.sql", sql);
             StatusMessage = $"INSERT script generated for {tableName}.";
         }
@@ -981,6 +1182,7 @@ public partial class MainViewModel : ObservableObject
         {
             if (node == null || string.IsNullOrWhiteSpace(node.Name)) return;
             string tableName = node.Name;
+            string quotedTableName = SqlIdentifierQuoter.Quote(SelectedProvider, tableName);
             System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.ScriptUpdate: {tableName}");
 
             string setClause = node.Children.Count > 0
@@ -989,7 +1191,7 @@ public partial class MainViewModel : ObservableObject
 
             string pkCol = node.Children.FirstOrDefault(c => c.Icon == "🔑" || c.Name.StartsWith("id"))?.Name.Split(' ')[0] ?? "id";
 
-            string sql = $"-- SSMS Script Table as UPDATE To\nUPDATE {tableName}\nSET\n    {setClause}\nWHERE {pkCol} = 1;";
+            string sql = $"-- SSMS Script Table as UPDATE To\nUPDATE {quotedTableName}\nSET\n    {setClause}\nWHERE {pkCol} = 1;";
             AddQueryTab($"Update_{tableName}.sql", sql);
             StatusMessage = $"UPDATE script generated for {tableName}.";
         }
@@ -1006,11 +1208,12 @@ public partial class MainViewModel : ObservableObject
         {
             if (node == null || string.IsNullOrWhiteSpace(node.Name)) return;
             string tableName = node.Name;
+            string quotedTableName = SqlIdentifierQuoter.Quote(SelectedProvider, tableName);
             System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.ScriptDelete: {tableName}");
 
             string pkCol = node.Children.FirstOrDefault(c => c.Icon == "🔑" || c.Name.StartsWith("id"))?.Name.Split(' ')[0] ?? "id";
 
-            string sql = $"-- SSMS Script Table as DELETE To\nDELETE FROM {tableName}\nWHERE {pkCol} = 1;";
+            string sql = $"-- SSMS Script Table as DELETE To\nDELETE FROM {quotedTableName}\nWHERE {pkCol} = 1;";
             AddQueryTab($"Delete_{tableName}.sql", sql);
             StatusMessage = $"DELETE script generated for {tableName}.";
         }
@@ -1027,13 +1230,14 @@ public partial class MainViewModel : ObservableObject
         {
             if (node == null || string.IsNullOrWhiteSpace(node.Name)) return;
             string tableName = node.Name;
+            string quotedTableName = SqlIdentifierQuoter.Quote(SelectedProvider, tableName);
             System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.ScriptCreate: {tableName}");
 
             string colDefs = node.Children.Count > 0
                 ? string.Join(",\n    ", node.Children.Select(FormatColumnDefinitionForCreate))
                 : "id INT PRIMARY KEY,\n    name VARCHAR(255)";
 
-            string sql = $"-- SSMS Script Table as CREATE To\nCREATE TABLE {tableName} (\n    {colDefs}\n);";
+            string sql = $"-- SSMS Script Table as CREATE To\nCREATE TABLE {quotedTableName} (\n    {colDefs}\n);";
             AddQueryTab($"Create_{tableName}.sql", sql);
             StatusMessage = $"CREATE TABLE script generated for {tableName}.";
         }
@@ -1730,38 +1934,30 @@ public partial class MainViewModel : ObservableObject
                     }
                 }
 
-                var g = new Graph("Reverse Engineered ER Diagram");
-                foreach (var t in schemaResp.Tables)
+                // ER図（MSAGL Graph）は全テーブルを1枚に描画すると大規模DB（実データ規模で数百テーブル）で
+                // 視認不能になるため、完全なスキーマ応答を保持しておき、スキーマ（データベース）単位＋
+                // 手動テーブル選択で都度絞り込んで描画する方式に変更。RebuildErDiagramGraph が実際の描画を担う。
+                _lastFullSchemaResponse = schemaResp;
+
+                var schemaGroups = schemaResp.Tables.Select(t => GetErDiagramSchemaGroup(t.Name))
+                    .Concat(schemaResp.Views.Select(v => GetErDiagramSchemaGroup(v.Name)))
+                    .Distinct()
+                    .OrderBy(s => s)
+                    .ToList();
+
+                ErDiagramSchemas.Clear();
+                foreach (var s in schemaGroups)
                 {
-                    var node = g.AddNode(t.Name);
-                    var colList = t.Columns.Select(c => $"{c.Name}: {c.DataType}{(c.IsPrimaryKey ? " [PK]" : "")}");
-                    node.LabelText = $"{t.Name}\n" + string.Join("\n", colList);
-                    node.Attr.Shape = Shape.Box;
-                    node.Attr.FillColor = MsaglColor.Azure;
+                    ErDiagramSchemas.Add(s);
                 }
 
-                foreach (var v in schemaResp.Views)
-                {
-                    var node = g.AddNode(v.Name);
-                    var colList = v.Columns.Select(c => $"{c.Name}: {c.DataType}");
-                    node.LabelText = $"👁 {v.Name}\n" + string.Join("\n", colList);
-                    node.Attr.Shape = Shape.Box;
-                    node.Attr.FillColor = MsaglColor.Lavender; // ビューはテーブルと色分けして区別する
-                }
-
-                foreach (var fk in schemaResp.ForeignKeys)
-                {
-                    if (schemaResp.Tables.Any(x => x.Name == fk.PkTable) && schemaResp.Tables.Any(x => x.Name == fk.FkTable))
-                    {
-                        var edge = g.AddEdge(fk.PkTable, fk.FkTable);
-                        edge.LabelText = fk.ConstraintName;
-                        edge.Attr.LineWidth = 2;
-                        edge.Attr.Color = MsaglColor.Blue;
-                    }
-                }
-
-                Graph = g;
-                GraphUpdated?.Invoke();
+                // SelectedErDiagramSchema の変更は OnSelectedErDiagramSchemaChanged 経由で
+                // ErDiagramTableChoices の再構築 → RebuildErDiagramGraph（初回ER図描画）まで自動的に行われるが、
+                // 再接続時に同名スキーマが選択済みだと値が変化せずフックが発火しないため、明示的にも呼び直す
+                // （_lastFullSchemaResponse は新しいデータに更新済みのため、確実に最新化するための保険）
+                SelectedErDiagramSchema = schemaGroups.FirstOrDefault();
+                RebuildErDiagramTableChoices();
+                RebuildErDiagramGraph();
 
                 DbObjectTree.Clear();
                 var dbRootNode = new DbObjectNode($"{SelectedProvider} Database (Live Active)", DbObjectType.Database, "🗄");

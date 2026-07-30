@@ -62,6 +62,7 @@ public class Program
                 try
                 {
                     var builder = WebApplication.CreateBuilder(args);
+                    builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Error); // Kestrel/Hosting 既定のINFOログを抑制しERRORのみ出力（NEODB_API_PORT=の素のConsole.WriteLineには影響しない）
                     builder.Services.AddGrpc();
                     builder.Services.AddSingleton<DbSessionManager>(); // トランザクションセッション（オートコミットOFF時）を保持するシングルトン
 

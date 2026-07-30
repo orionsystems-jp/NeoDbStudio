@@ -12,6 +12,7 @@ use before any redistribution.
 |---|---|---|
 | AutomaticGraphLayout.WpfGraphControl | 1.1.12 | MIT |
 | AvalonEdit | 6.3.0 | MIT |
+| ClosedXML | 0.105.1 | MIT |
 | CommunityToolkit.Mvvm | 8.2.2 | MIT |
 | Microsoft.Data.SqlClient | 5.2.0 | MIT |
 | Microsoft.Data.Sqlite | 8.0.3 | MIT |

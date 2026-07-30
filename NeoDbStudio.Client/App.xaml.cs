@@ -41,6 +41,12 @@ public partial class App : Application
     /// </summary>
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 全メソッドの [INFO] Entry/Success トレースを抑制し [ERROR]/[FATAL] のみ出力する。
+        // 実データ規模（300テーブル超）でトレース量が数万行に達しデバッガーアタッチ時に著しく遅くなる問題を解消するため、
+        // 他のどのコードよりも先にリスナーを差し替える。
+        System.Diagnostics.Trace.Listeners.Clear();
+        System.Diagnostics.Trace.Listeners.Add(new ErrorOnlyTraceListener());
+
         try
         {
             System.Diagnostics.Debug.WriteLine("[INFO] App.OnStartup: アプリ起動・DIコンテナ構築を開始します");
@@ -72,6 +78,31 @@ public partial class App : Application
         {
             System.Diagnostics.Debug.WriteLine($"[FATAL] App.OnStartup: アプリ起動例外発生 - {ex.Message}");
             MessageBox.Show($"Application Startup Failed: {ex.Message}", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// [1. 処理概要]
+    /// アプリケーション終了時に DI コンテナを破棄し、ApiProcessManager.Dispose() 経由で
+    /// バックグラウンド起動した NeoDbStudio.Api.exe 子プロセスを確実に終了させます。
+    /// （未破棄のまま放置すると子プロセスがオーファン化し、次回ビルド時に bin フォルダの
+    /// ロック競合を起こすため必須。）
+    /// </summary>
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] App.OnExit: DIコンテナの破棄を開始します");
+            (Services as IDisposable)?.Dispose();
+            System.Diagnostics.Debug.WriteLine("[INFO] App.OnExit: DIコンテナの破棄が正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] App.OnExit: DIコンテナ破棄中に例外発生 - {ex.Message}");
+        }
+        finally
+        {
+            base.OnExit(e);
         }
     }
 

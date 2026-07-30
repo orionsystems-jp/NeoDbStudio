@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              xmlns:local="clr-namespace:NeoDbStudio.Client"
-             xmlns:converters="clr-namespace:NeoDbStudio.Client.Converters">
+             xmlns:converters="clr-namespace:NeoDbStudio.Client.Converters"
+             ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

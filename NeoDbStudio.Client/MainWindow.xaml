@@ -579,7 +579,7 @@
                         </TabControl>
                     </TabItem>
 
-                    <!-- ER Diagram Tab: MSAGL GraphViewer host panel（実カラム間FK関係の自動生成ER図・エクスポート機能付き） -->
+                    <!-- ER Diagram Tab: MSAGL GraphViewer host panel（スキーマ単位分割表示＋テーブル絞り込み＋PNG/Excelエクスポート機能付き） -->
                     <TabItem Header="🗺 ER Diagram">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -587,10 +587,45 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="4,4,4,6">
+                                <TextBlock Text="スキーマ:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <ComboBox x:Name="CmbErDiagramSchema" Width="220" Margin="0,0,12,0"
+                                          ItemsSource="{Binding ErDiagramSchemas}"
+                                          SelectedItem="{Binding SelectedErDiagramSchema}"/>
                                 <Button x:Name="BtnResetErView" Content="🔄 Reset View" Click="BtnResetErView_Click" Height="30" Padding="10,0" Margin="0,0,8,0"/>
-                                <Button x:Name="BtnExportErPng" Content="📷 Export as PNG" Click="BtnExportErPng_Click" Height="30" Padding="10,0"/>
+                                <Button x:Name="BtnExportErPng" Content="📷 Export as PNG" Click="BtnExportErPng_Click" Height="30" Padding="10,0" Margin="0,0,8,0"/>
+                                <Button Content="📊 Export Schema to Excel" Command="{Binding ExportSchemaToExcelCommand}" Height="30" Padding="10,0"/>
                             </StackPanel>
-                            <Grid x:Name="GViewerHost" Grid.Row="1" Background="White"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" BorderBrush="#3F3F46" BorderThickness="0,0,1,0" Padding="6">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="表示するテーブル/ビュー:" FontWeight="Bold" Margin="0,0,0,6"/>
+                                        <ListBox Grid.Row="1" ItemsSource="{Binding ErDiagramTableChoices}" BorderThickness="0">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="0,2"/>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <StackPanel Grid.Row="2" Margin="0,6,0,0">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <Button Content="全選択" Command="{Binding SelectAllErDiagramTablesCommand}" Padding="8,4" Margin="0,0,6,0"/>
+                                                <Button Content="全解除" Command="{Binding DeselectAllErDiagramTablesCommand}" Padding="8,4"/>
+                                            </StackPanel>
+                                            <Button Content="✅ 適用 (Apply Filter)" Command="{Binding ApplyErDiagramFilterCommand}" Padding="8,6"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <Grid x:Name="GViewerHost" Grid.Column="1" Background="White"/>
+                            </Grid>
                         </Grid>
                     </TabItem>
                     </TabControl>
