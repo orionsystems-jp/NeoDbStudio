@@ -668,6 +668,29 @@
                                 <ListBox Grid.Row="1" ItemsSource="{Binding QueryHistory}" FontFamily="Consolas" FontSize="11" Margin="4"/>
                             </Grid>
                         </TabItem>
+                        <TabItem Header="📎 SQL Snippets">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="4">
+                                    <Button Command="{Binding SaveCurrentQueryAsSnippetCommand}" Content="💾 現在のクエリを保存" Height="26" Padding="8,0" Margin="0,0,6,0"/>
+                                    <Button Command="{Binding InsertSelectedSnippetCommand}" Content="📥 挿入 (Insert)" Height="26" Padding="8,0" Margin="0,0,6,0"/>
+                                    <Button Command="{Binding DeleteSelectedSnippetCommand}" Content="🗑 削除" Height="26" Padding="8,0"/>
+                                </StackPanel>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding SqlSnippets}" SelectedItem="{Binding SelectedSqlSnippet}" FontFamily="Consolas" FontSize="11" Margin="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding Sql}" Foreground="#AAAAAA" TextTrimming="CharacterEllipsis" MaxWidth="700"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </TabItem>
                     </TabControl>
                 </Border>
             </Grid>

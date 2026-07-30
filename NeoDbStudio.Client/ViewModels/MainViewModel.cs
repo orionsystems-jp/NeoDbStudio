@@ -51,6 +51,7 @@ public partial class MainViewModel : ObservableObject
     private AsyncDuplexStreamingCall<DebugCommand, DebugEvent>? _debugCall;
     private readonly string _historyFilePath;
     private readonly string _queryHistoryFilePath; // クエリ実行履歴の永続化先（%AppData% 配下・暗号化保存）
+    private readonly string _sqlSnippetsFilePath; // SQLスニペットライブラリの永続化先（%AppData% 配下・暗号化保存）
     private const int MaxQueryHistoryEntries = 200; // 永続化するクエリ履歴の上限件数（無制限肥大化を防止）
 
     #endregion
@@ -198,6 +199,13 @@ public partial class MainViewModel : ObservableObject
     }
     public ObservableCollection<DbObjectNode> DbObjectTree { get; } = new();
     public ObservableCollection<string> QueryHistory { get; } = new();
+
+    /// <summary>登録済みSQLスニペット一覧（%AppData%配下へ暗号化永続化）。</summary>
+    public ObservableCollection<SqlSnippet> SqlSnippets { get; } = new();
+
+    /// <summary>SQLスニペット一覧で現在選択中の項目。</summary>
+    [ObservableProperty]
+    private SqlSnippet? _selectedSqlSnippet;
     public ObservableCollection<string> ExecutionLogs { get; } = new();
 
     /// <summary>ER図タブのスキーマ（データベース）選択肢一覧。テーブル修飾名の先頭ドット区切り部分から抽出。</summary>
@@ -462,6 +470,10 @@ public partial class MainViewModel : ObservableObject
             _queryHistoryFilePath = Path.Combine(appDataDir, "query_history.json");
             LoadQueryHistory();
 
+            // SQLスニペットライブラリも同様に %AppData% 配下へ暗号化保存し、次回起動時も復元する
+            _sqlSnippetsFilePath = Path.Combine(appDataDir, "sql_snippets.json");
+            LoadSqlSnippets();
+
             InitThemes();
             SelectedTheme = AvailableThemes[0];
 
@@ -621,6 +633,168 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[WARNING] MainViewModel.ClearQueryHistory: 例外発生 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 永続化済みのSQLスニペット一覧（%AppData% 配下・暗号化保存）を読み込み、SqlSnippets へ復元します。
+    /// </summary>
+    private void LoadSqlSnippets()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.LoadSqlSnippets: 開始します");
+
+            if (File.Exists(_sqlSnippetsFilePath))
+            {
+                string json = SecureFileStore.ReadFileContent(_sqlSnippetsFilePath);
+                var list = JsonSerializer.Deserialize<List<SqlSnippet>>(json);
+                if (list != null)
+                {
+                    foreach (var entry in list.OrderBy(s => s.Name))
+                    {
+                        SqlSnippets.Add(entry);
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[INFO] MainViewModel.LoadSqlSnippets: 読込完了 ({SqlSnippets.Count} 件)");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WARNING] MainViewModel.LoadSqlSnippets: 読込警告 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 現在の SqlSnippets を暗号化コンテナ形式で永続化します。
+    /// </summary>
+    private void SaveSqlSnippets()
+    {
+        try
+        {
+            string json = JsonSerializer.Serialize(SqlSnippets.ToList(), new JsonSerializerOptions { WriteIndented = true });
+            SecureFileStore.WriteEncryptedFile(_sqlSnippetsFilePath, json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WARNING] MainViewModel.SaveSqlSnippets: 保存警告 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 現在アクティブなクエリタブのSQL全文を、名前を付けてスニペットライブラリへ保存します。
+    /// </summary>
+    [RelayCommand]
+    private void SaveCurrentQueryAsSnippet()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.SaveCurrentQueryAsSnippet: 開始します");
+
+            if (ActiveQueryTab == null || string.IsNullOrWhiteSpace(ActiveQueryTab.SqlScript))
+            {
+                MessageBox.Show("保存するSQLがありません。クエリタブにSQLを入力してください。", "Save as Snippet", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string? name = Views.InputBoxDialog.Show(Application.Current?.MainWindow, "SQLスニペットとして保存", "スニペット名を入力してください:");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            var existing = SqlSnippets.FirstOrDefault(s => s.Name == name);
+            if (existing != null)
+            {
+                SqlSnippets.Remove(existing);
+            }
+
+            var snippet = new SqlSnippet { Name = name, Sql = ActiveQueryTab.SqlScript, CreatedAt = DateTime.Now };
+            SqlSnippets.Add(snippet);
+            SaveSqlSnippets();
+
+            StatusMessage = $"SQL snippet saved: {name}";
+            AddLogEntry($"SQL snippet saved: {name}");
+
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.SaveCurrentQueryAsSnippet: 正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.SaveCurrentQueryAsSnippet: 例外発生 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 選択中のSQLスニペットを、現在アクティブなクエリタブへ挿入します（既存内容がある場合は末尾に追記）。
+    /// </summary>
+    [RelayCommand]
+    private void InsertSelectedSnippet()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.InsertSelectedSnippet: 開始します");
+
+            if (SelectedSqlSnippet == null)
+            {
+                MessageBox.Show("挿入するスニペットを選択してください。", "Insert Snippet", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (ActiveQueryTab == null)
+            {
+                MessageBox.Show("挿入先のクエリタブがありません。先にクエリタブを開いてください。", "Insert Snippet", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ActiveQueryTab.SqlScript = string.IsNullOrWhiteSpace(ActiveQueryTab.SqlScript)
+                ? SelectedSqlSnippet.Sql
+                : ActiveQueryTab.SqlScript.TrimEnd() + "\n\n" + SelectedSqlSnippet.Sql;
+
+            StatusMessage = $"SQL snippet inserted: {SelectedSqlSnippet.Name}";
+            AddLogEntry($"SQL snippet inserted: {SelectedSqlSnippet.Name}");
+
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.InsertSelectedSnippet: 正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.InsertSelectedSnippet: 例外発生 - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 選択中のSQLスニペットを確認ダイアログの上で削除します。
+    /// </summary>
+    [RelayCommand]
+    private void DeleteSelectedSnippet()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.DeleteSelectedSnippet: 開始します");
+
+            if (SelectedSqlSnippet == null)
+            {
+                return;
+            }
+
+            var result = MessageBox.Show($"スニペット「{SelectedSqlSnippet.Name}」を削除しますか？", "Delete Snippet", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            string deletedName = SelectedSqlSnippet.Name;
+            SqlSnippets.Remove(SelectedSqlSnippet);
+            SelectedSqlSnippet = null;
+            SaveSqlSnippets();
+
+            StatusMessage = $"SQL snippet deleted: {deletedName}";
+            AddLogEntry($"SQL snippet deleted: {deletedName}");
+
+            System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.DeleteSelectedSnippet: 正常終了しました");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] MainViewModel.DeleteSelectedSnippet: 例外発生 - {ex.Message}");
         }
     }
 
