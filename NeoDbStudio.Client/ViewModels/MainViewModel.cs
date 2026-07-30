@@ -385,7 +385,7 @@ public partial class MainViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine("[INFO] MainViewModel.ExportSchemaToExcel: 開始します");
 
-            if (_lastFullSchemaResponse == null)
+            if (_lastFullSchemaResponse == null || string.IsNullOrEmpty(SelectedErDiagramSchema))
             {
                 MessageBox.Show("エクスポート対象のスキーマがありません。先にDBへ接続してください。", "Export to Excel", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -394,14 +394,16 @@ public partial class MainViewModel : ObservableObject
             var dlg = new SaveFileDialog
             {
                 Filter = "Excel Workbook (*.xlsx)|*.xlsx",
-                FileName = $"Schema_{ProjectName}.xlsx".Replace(' ', '_')
+                FileName = $"Schema_{SelectedErDiagramSchema}.xlsx".Replace(' ', '_')
             };
             if (dlg.ShowDialog() != true)
             {
                 return;
             }
 
-            SchemaExcelExporter.Export(_lastFullSchemaResponse, dlg.FileName);
+            // エクスポート範囲はER図タブで選択中のスキーマ1つに限定する（テーブル単位シート名の一意性を
+            // 保証するため。複数テナントDBを1ブックへまとめると同名テーブルのシート名が衝突するため）
+            SchemaExcelExporter.Export(_lastFullSchemaResponse, SelectedErDiagramSchema, ProjectName, SelectedProvider, ConnectionString, dlg.FileName);
 
             StatusMessage = $"Schema exported to Excel: {dlg.FileName}";
             AddLogEntry($"Schema exported to Excel: {dlg.FileName}");
