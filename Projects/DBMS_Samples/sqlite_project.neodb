@@ -1,7 +1,7 @@
 {
   "ProjectName": "SQLite Local Embedded Engine (1,000+ Bilingual Records)",
   "ProviderType": "SQLite",
-  "ConnectionString": "Data Source=F:\\OrionSystems\\NeoDbStudio_Project\\Scripts\\sqlite_seed\\neodb_sqlite.db;",
+  "ConnectionString": "Data Source=F:\\OSS\\NeoDbStudio_Project\\Scripts\\sqlite_seed\\neodb_sqlite.db;",
   "CreatedAt": "2026-07-29T00:47:00Z",
   "LastOpenedAt": "2026-07-29T00:47:00Z",
   "Description": "SQLite用公式プロジェクトファイル。英語・日本語1,000件超のバイリンガルテーブル（users, products, orders）完備。"
